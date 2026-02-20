@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { BuildRecord } from '@/lib/types';
 import BuildCard from './BuildCard';
 
@@ -12,11 +12,7 @@ export default function BuildHistory({ refreshTrigger }: Props) {
   const [builds, setBuilds] = useState<BuildRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchBuilds();
-  }, [refreshTrigger]);
-
-  async function fetchBuilds() {
+  const fetchBuilds = useCallback(async () => {
     try {
       const res = await fetch('/api/builds');
       if (res.ok) {
@@ -26,7 +22,19 @@ export default function BuildHistory({ refreshTrigger }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchBuilds();
+  }, [refreshTrigger, fetchBuilds]);
+
+  // Auto-poll the build list when there are active builds
+  useEffect(() => {
+    const hasActive = builds.some(b => b.status === 'queued' || b.status === 'building');
+    if (!hasActive) return;
+    const interval = setInterval(fetchBuilds, 10000);
+    return () => clearInterval(interval);
+  }, [builds, fetchBuilds]);
 
   function handleDelete(id: string) {
     setBuilds(prev => prev.filter(b => b.id !== id));
