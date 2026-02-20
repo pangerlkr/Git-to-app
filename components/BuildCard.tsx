@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { BuildRecord, BuildStatus } from '@/lib/types';
 
 interface Props {
@@ -26,21 +27,22 @@ const STATUS_ICONS: Record<BuildStatus, string> = {
 
 export default function BuildCard({ buildId, onDelete }: Props) {
   const [build, setBuild] = useState<BuildRecord | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
 
-  useEffect(() => {
-    fetchBuild();
-    const interval = setInterval(fetchBuild, 5000);
-    return () => clearInterval(interval);
-  }, [buildId]);
-
-  async function fetchBuild() {
+  const fetchBuild = useCallback(async () => {
     try {
       const res = await fetch(`/api/builds/${buildId}`);
       if (res.ok) setBuild(await res.json());
     } catch {
       // ignore
     }
-  }
+  }, [buildId]);
+
+  useEffect(() => {
+    fetchBuild();
+    const interval = setInterval(fetchBuild, 5000);
+    return () => clearInterval(interval);
+  }, [fetchBuild]);
 
   async function handleDelete() {
     if (!confirm('Delete this build record?')) return;
@@ -65,7 +67,12 @@ export default function BuildCard({ buildId, onDelete }: Props) {
     <div className="bg-white rounded-xl shadow p-5 hover:shadow-md transition">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-gray-900 truncate">{build.repoName}</div>
+          <Link
+            href={`/builds/${buildId}`}
+            className="font-semibold text-gray-900 hover:text-indigo-600 truncate block transition"
+          >
+            {build.repoName}
+          </Link>
           <div className="text-xs text-gray-500 mt-0.5 truncate">{build.repoUrl}</div>
         </div>
         <div className="flex items-center gap-2 ml-3 shrink-0">
@@ -122,6 +129,14 @@ export default function BuildCard({ buildId, onDelete }: Props) {
         >
           📄 GitHub Actions Workflow
         </button>
+        {build.logs && (
+          <button
+            onClick={() => setShowLogs(v => !v)}
+            className="text-xs text-gray-600 hover:text-gray-800 border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-lg transition"
+          >
+            {showLogs ? '🙈 Hide Logs' : '📋 View Logs'}
+          </button>
+        )}
         <button
           onClick={handleDelete}
           className="text-xs text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1.5 rounded-lg transition ml-auto"
@@ -129,6 +144,12 @@ export default function BuildCard({ buildId, onDelete }: Props) {
           🗑️ Delete
         </button>
       </div>
+
+      {showLogs && build.logs && (
+        <div className="mt-3 p-3 bg-gray-900 rounded-lg text-xs text-green-400 font-mono overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
+          {build.logs}
+        </div>
+      )}
     </div>
   );
 }
