@@ -29,13 +29,9 @@ export default function BuildCard({ buildId, onDelete }: Props) {
 
   useEffect(() => {
     fetchBuild();
-    const interval = setInterval(() => {
-      if (build && (build.status === 'queued' || build.status === 'building')) {
-        fetchBuild();
-      }
-    }, 5000);
+    const interval = setInterval(fetchBuild, 5000);
     return () => clearInterval(interval);
-  }, [buildId, build?.status]);
+  }, [buildId]);
 
   async function fetchBuild() {
     try {

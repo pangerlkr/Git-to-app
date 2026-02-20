@@ -12,7 +12,7 @@ Thank you for your interest in contributing to Git-to-App!
 
 ## Development
 
-- **Framework**: Next.js 14 App Router with TypeScript
+- **Framework**: Next.js 16 App Router with TypeScript
 - **Styling**: Tailwind CSS
 - **Database**: SQLite (better-sqlite3)
 - **Testing**: Jest
