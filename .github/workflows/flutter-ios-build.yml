@@ -15,7 +15,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if Flutter project exists
+        id: check-flutter
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Flutter
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: 'stable'
@@ -23,35 +33,43 @@ jobs:
           cache: true
 
       - name: Get Flutter dependencies
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter pub get
 
       - name: Install CocoaPods
+        if: steps.check-flutter.outputs.exists == 'true'
         run: |
           cd ios
           pod install
         continue-on-error: true
 
       - name: Run Flutter analyzer
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter analyze
         continue-on-error: true
 
       - name: Run Flutter tests
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter test
         continue-on-error: true
 
       - name: Set up Xcode
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
       - name: Build Flutter iOS (Release - unsigned)
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter build ios --release --no-codesign
 
       - name: Build Flutter iOS (Debug)
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter build ios --debug --no-codesign --simulator
         continue-on-error: true
 
       - name: Archive iOS build artifacts
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-ios-build
@@ -61,6 +79,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Create IPA (unsigned)
+        if: steps.check-flutter.outputs.exists == 'true'
         run: |
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
@@ -68,6 +87,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload IPA
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-ios-unsigned-ipa

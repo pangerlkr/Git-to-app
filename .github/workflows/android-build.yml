@@ -15,7 +15,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if Android project exists
+        id: check-android
+        run: |
+          if [ -d "android" ] || [ -f "gradlew" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up JDK 17
+        if: steps.check-android.outputs.exists == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -23,6 +33,7 @@ jobs:
           cache: 'gradle'
 
       - name: Grant execute permission for gradlew
+        if: steps.check-android.outputs.exists == 'true'
         run: |
           if [ -f "android/gradlew" ]; then
             chmod +x android/gradlew
@@ -31,9 +42,11 @@ jobs:
           fi
 
       - name: Setup Gradle
+        if: steps.check-android.outputs.exists == 'true'
         uses: gradle/gradle-build-action@v3
 
       - name: Build Android APK (Debug)
+        if: steps.check-android.outputs.exists == 'true'
         run: |
           if [ -d "android" ]; then
             cd android
@@ -43,6 +56,7 @@ jobs:
           fi
 
       - name: Build Android APK (Release)
+        if: steps.check-android.outputs.exists == 'true'
         run: |
           if [ -d "android" ]; then
             cd android
@@ -52,6 +66,7 @@ jobs:
           fi
 
       - name: Upload Debug APK
+        if: steps.check-android.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk
@@ -61,6 +76,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload Release APK
+        if: steps.check-android.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: android-release-apk
@@ -70,6 +86,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Run Android Tests
+        if: steps.check-android.outputs.exists == 'true'
         run: |
           if [ -d "android" ]; then
             cd android
