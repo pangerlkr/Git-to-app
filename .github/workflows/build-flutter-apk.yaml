@@ -1,0 +1,99 @@
+name: Build Flutter Android APK
+run-name: ${{ github.event.inputs.repository }} ${{ github.event.inputs.branchName && format('{0}', github.event.inputs.branchName) }} ${{ github.event.inputs.subdir && format('[/{0}]', github.event.inputs.subdir) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Git repository URL"
+        required: true
+        default: "https://github.com/flutter/samples"
+      branchName:
+        description: "Git branch name [Optional]"
+        required: false
+        default: ""
+      subdir:
+        description: "Relative subdirectory path when the project is nested [Optional]"
+        required: false
+        default: ""
+      flutterVersion:
+        description: "Flutter version to use (e.g., stable, beta, 3.19.0)"
+        required: false
+        default: "stable"
+      buildType:
+        description: "Build type: debug, release, or both"
+        required: false
+        default: "release"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone project
+        run: |
+          if [[ -z "${{ github.event.inputs.branchName }}" ]]; then
+            git clone --recurse-submodules --depth=1 ${{ github.event.inputs.repository }} workspace
+          else
+            git clone --recurse-submodules --depth=1 --branch ${{ github.event.inputs.branchName }} ${{ github.event.inputs.repository }} workspace
+          fi
+
+      - name: Determine Flutter project directory
+        working-directory: ./workspace
+        run: |
+          if [[ -n "${{ github.event.inputs.subdir }}" ]]; then
+            BUILD_DIR="${{ github.event.inputs.subdir }}"
+          else
+            # Search for pubspec.yaml recursively
+            FOUND=$(find . -maxdepth 4 -name "pubspec.yaml" | sort | head -1)
+            if [ -n "$FOUND" ]; then
+              BUILD_DIR=$(dirname "$FOUND")
+            else
+              echo "Error: Could not find pubspec.yaml. Please specify the 'subdir' input parameter."
+              exit 1
+            fi
+          fi
+
+          echo "Building in directory: $BUILD_DIR"
+          echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_ENV
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ github.event.inputs.flutterVersion }}
+          channel: ${{ github.event.inputs.flutterVersion == 'stable' || github.event.inputs.flutterVersion == 'beta' && github.event.inputs.flutterVersion || 'stable' }}
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter pub get
+
+      - name: Build Flutter APK (Debug)
+        if: github.event.inputs.buildType == 'debug' || github.event.inputs.buildType == 'both'
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter build apk --debug
+
+      - name: Build Flutter APK (Release)
+        if: github.event.inputs.buildType == 'release' || github.event.inputs.buildType == 'both'
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter build apk --release
+
+      - name: Build Flutter App Bundle (Release)
+        if: github.event.inputs.buildType == 'release' || github.event.inputs.buildType == 'both'
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter build appbundle --release
+        continue-on-error: true
+
+      - name: Upload APK artifacts with 1 day retention
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            workspace/**/build/app/outputs/flutter-apk/*.apk
+            workspace/**/build/app/outputs/bundle/release/*.aab
+          name: flutter-apk-archive
+          retention-days: 1

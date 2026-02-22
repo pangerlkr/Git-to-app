@@ -1,0 +1,118 @@
+name: Build Flutter iOS App
+run-name: ${{ github.event.inputs.repository }} ${{ github.event.inputs.branchName && format('{0}', github.event.inputs.branchName) }} ${{ github.event.inputs.subdir && format('[/{0}]', github.event.inputs.subdir) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Git repository URL"
+        required: true
+        default: "https://github.com/flutter/samples"
+      branchName:
+        description: "Git branch name [Optional]"
+        required: false
+        default: ""
+      subdir:
+        description: "Relative subdirectory path when the project is nested [Optional]"
+        required: false
+        default: ""
+      flutterVersion:
+        description: "Flutter version to use (e.g., stable, beta, 3.19.0)"
+        required: false
+        default: "stable"
+      buildConfiguration:
+        description: "Build configuration: debug, release, or both"
+        required: false
+        default: "release"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Clone project
+        run: |
+          if [[ -z "${{ github.event.inputs.branchName }}" ]]; then
+            git clone --recurse-submodules --depth=1 ${{ github.event.inputs.repository }} workspace
+          else
+            git clone --recurse-submodules --depth=1 --branch ${{ github.event.inputs.branchName }} ${{ github.event.inputs.repository }} workspace
+          fi
+
+      - name: Determine Flutter project directory
+        working-directory: ./workspace
+        run: |
+          if [[ -n "${{ github.event.inputs.subdir }}" ]]; then
+            BUILD_DIR="${{ github.event.inputs.subdir }}"
+          else
+            # Search for pubspec.yaml recursively
+            FOUND=$(find . -maxdepth 4 -name "pubspec.yaml" | sort | head -1)
+            if [ -n "$FOUND" ]; then
+              BUILD_DIR=$(dirname "$FOUND")
+            else
+              echo "Error: Could not find pubspec.yaml. Please specify the 'subdir' input parameter."
+              exit 1
+            fi
+          fi
+
+          echo "Building in directory: $BUILD_DIR"
+          echo "BUILD_DIR=$BUILD_DIR" >> $GITHUB_ENV
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ github.event.inputs.flutterVersion }}
+          channel: ${{ github.event.inputs.flutterVersion == 'stable' || github.event.inputs.flutterVersion == 'beta' && github.event.inputs.flutterVersion || 'stable' }}
+          cache: true
+
+      - name: Get Flutter dependencies
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: |
+          if [ -d "ios" ]; then
+            cd ios
+            pod install
+          fi
+        continue-on-error: true
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build Flutter iOS (Debug)
+        if: github.event.inputs.buildConfiguration == 'debug' || github.event.inputs.buildConfiguration == 'both'
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter build ios --debug --no-codesign --simulator
+        continue-on-error: true
+
+      - name: Build Flutter iOS (Release - unsigned)
+        if: github.event.inputs.buildConfiguration == 'release' || github.event.inputs.buildConfiguration == 'both'
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: flutter build ios --release --no-codesign
+
+      - name: Create IPA (unsigned)
+        if: github.event.inputs.buildConfiguration == 'release' || github.event.inputs.buildConfiguration == 'both'
+        working-directory: ./workspace/${{ env.BUILD_DIR }}
+        run: |
+          if [ -d "build/ios/iphoneos/Runner.app" ]; then
+            mkdir -p Payload
+            cp -r build/ios/iphoneos/Runner.app Payload/
+            zip -r flutter-ios-unsigned.ipa Payload
+            echo "IPA created successfully"
+          else
+            echo "No Runner.app found, skipping IPA creation"
+          fi
+        continue-on-error: true
+
+      - name: Upload build artifacts with 1 day retention
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            workspace/**/build/ios/iphoneos/Runner.app
+            workspace/**/build/ios/iphonesimulator/Runner.app
+            workspace/**/*-unsigned.ipa
+          name: flutter-ios-archive
+          retention-days: 1
+          if-no-files-found: warn
