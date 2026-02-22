@@ -15,19 +15,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if iOS project exists
+        id: check-ios
+        run: |
+          if [ -d "ios" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Node.js
+        if: steps.check-ios.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
+        if: steps.check-ios.outputs.exists == 'true'
         run: |
           if [ -f "package.json" ]; then
             npm ci
           fi
 
       - name: Install CocoaPods
+        if: steps.check-ios.outputs.exists == 'true'
         run: |
           if [ -d "ios" ]; then
             cd ios
@@ -35,11 +46,13 @@ jobs:
           fi
 
       - name: Set up Xcode
+        if: steps.check-ios.outputs.exists == 'true'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
       - name: Build iOS App (Debug)
+        if: steps.check-ios.outputs.exists == 'true'
         run: |
           if [ -d "ios" ]; then
             cd ios
@@ -56,6 +69,7 @@ jobs:
         continue-on-error: true
 
       - name: Build iOS App (Release - unsigned)
+        if: steps.check-ios.outputs.exists == 'true'
         run: |
           if [ -d "ios" ]; then
             cd ios
@@ -75,6 +89,7 @@ jobs:
         continue-on-error: true
 
       - name: Archive build artifacts
+        if: steps.check-ios.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ios-build
@@ -84,6 +99,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Run iOS Tests
+        if: steps.check-ios.outputs.exists == 'true'
         run: |
           if [ -d "ios" ]; then
             cd ios

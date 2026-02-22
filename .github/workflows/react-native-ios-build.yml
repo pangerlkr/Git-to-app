@@ -15,34 +15,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if React Native project exists
+        id: check-rn
+        run: |
+          if [ -f "package.json" ] && [ -d "ios" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Node.js
+        if: steps.check-rn.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.check-rn.outputs.exists == 'true'
         run: npm ci
 
       - name: Run linter
+        if: steps.check-rn.outputs.exists == 'true'
         run: npm run lint --if-present
         continue-on-error: true
 
       - name: Run tests
+        if: steps.check-rn.outputs.exists == 'true'
         run: npm test --if-present
         continue-on-error: true
 
       - name: Install CocoaPods dependencies
+        if: steps.check-rn.outputs.exists == 'true'
         run: |
           cd ios
           pod install
 
       - name: Set up Xcode
+        if: steps.check-rn.outputs.exists == 'true'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
       - name: Build iOS App (Debug)
+        if: steps.check-rn.outputs.exists == 'true'
         run: |
           cd ios
           WORKSPACE=$(find . -name "*.xcworkspace" | head -1)
@@ -56,6 +72,7 @@ jobs:
         continue-on-error: true
 
       - name: Build iOS App (Release - unsigned)
+        if: steps.check-rn.outputs.exists == 'true'
         run: |
           cd ios
           WORKSPACE=$(find . -name "*.xcworkspace" | head -1)
@@ -72,6 +89,7 @@ jobs:
         continue-on-error: true
 
       - name: Archive build artifacts
+        if: steps.check-rn.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: react-native-ios-build
@@ -81,6 +99,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Run iOS Tests
+        if: steps.check-rn.outputs.exists == 'true'
         run: |
           cd ios
           WORKSPACE=$(find . -name "*.xcworkspace" | head -1)

@@ -15,14 +15,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check if Flutter project exists
+        id: check-flutter
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Java
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
       - name: Set up Flutter
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: 'stable'
@@ -30,26 +40,33 @@ jobs:
           cache: true
 
       - name: Get Flutter dependencies
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter pub get
 
       - name: Run Flutter analyzer
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter analyze
         continue-on-error: true
 
       - name: Run Flutter tests
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter test
         continue-on-error: true
 
       - name: Build Flutter APK (Debug)
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter build apk --debug
 
       - name: Build Flutter APK (Release)
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter build apk --release
 
       - name: Build Flutter App Bundle
+        if: steps.check-flutter.outputs.exists == 'true'
         run: flutter build appbundle --release
 
       - name: Upload Debug APK
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-android-debug-apk
@@ -57,6 +74,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload Release APK
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-android-release-apk
@@ -64,6 +82,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload App Bundle
+        if: steps.check-flutter.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: flutter-android-app-bundle
