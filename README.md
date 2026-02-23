@@ -71,31 +71,31 @@ Git-to-App supports a wide range of mobile application frameworks and project ty
 
 Git-to-App can build the following types of mobile applications:
 
-#### 1. **Expo Applications**
+#### 1. Expo Applications
 - Managed Expo apps
 - Bare workflow Expo apps
 - Apps with custom native modules
 - EAS Build-compatible projects
 
-#### 2. **React Native Applications**
+#### 2. React Native Applications
 - Standard React Native apps
 - Apps with custom native code
 - Capacitor + React Native projects
 - Ionic + React Native projects
 
-#### 3. **Flutter Applications**
+#### 3. Flutter Applications
 - Standard Flutter apps
 - Flutter apps with custom plugins
 - Multi-platform Flutter projects
 
-#### 4. **Native Android Applications**
+#### 4. Native Android Applications
 - Pure Android (Java/Kotlin) apps
 - Android apps with Gradle build system
 - Apps with custom build configurations
 - Capacitor Android projects
 - Cordova Android projects
 
-#### 5. **Native iOS Applications**
+#### 5. Native iOS Applications
 - Pure iOS (Swift/Objective-C) apps
 - CocoaPods-based projects
 - Xcode workspace projects
@@ -208,27 +208,28 @@ You can trigger external repository builds directly via GitHub Actions:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         Next.js App                         │
+│ Next.js App                                                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │   Frontend   │  │  API Routes  │  │   Database   │       │
-│  │  (React UI)  │─▶│  (REST API)  │─▶│   (SQLite)   │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-│                            │                                │
-│                            ▼                                │
-│                    ┌──────────────┐                         │
-│                    │    Builder   │                         │
-│                    │    Service   │                         │
-│                    └──────────────┘                         │
-│                            │                                │
-│              ┌─────────────┴─────────────┐                  │
-│              ▼                           ▼                  │
-│    ┌──────────────────┐       ┌──────────────────┐          │
-│    │  GitHub Actions  │       │  Expo EAS Build  │          │
-│    │    Workflows     │       │       API        │          │
-│    └──────────────────┘       └──────────────────┘          │
-└─────────────────────────────────────────────────────────────┘
+│  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐ │
+│  │   Frontend   │      │  API Routes  │      │   Database   │ │
+│  │  (React UI)  │──────▶  (REST API)  │──────▶   (SQLite)   │ │
+│  └──────────────┘      └──────────────┘      └──────────────┘ │
+│          │                    │                              │
+│          └────────────────────┼──────────────────────────────┘
+│                               ▼
+│                        ┌──────────────┐
+│                        │   Builder    │
+│                        │   Service    │
+│                        └──────────────┘
+│                               │
+│                ┌──────────────┴──────────────┐
+│                ▼                             ▼
+│      ┌──────────────────┐          ┌──────────────────┐
+│      │  GitHub Actions  │          │  Expo EAS Build  │
+│      │    Workflows     │          │       API        │
+│      └──────────────────┘          └──────────────────┘
+└─────────────────────────────────────────────────────────────┐
 ```
 
 ### Core Libraries
@@ -311,14 +312,16 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 | Role | Contributor | GitHub |
 |------|-------------|--------|
-| **Original Author** | pangerlkr | [@pangerlkr](https://github.com/pangerlkr) |
-| **Maintainer** | pangerlkr | [@pangerlkr](https://github.com/pangerlkr) |
+| **Original Author & Maintainer** | Pangerkumzuk Longkumer | [@pangerlkr](https://github.com/pangerlkr) |
+| **AI Contributor** | Claude (Anthropic) | [@Claude](https://github.com/apps/anthropic-code-agent) |
+| **AI Contributor** | GitHub Copilot (SWE Agent) | [@copilot-swe-agent](https://github.com/apps/copilot-swe-agent) |
+| **AI Contributor** | GitHub Copilot (CLI) | [@github-copilot-cli](https://github.com/apps/github-copilot-cli) |
 
 ### Project Status
 
 - **Status**: Active Development
-- **Latest Version**: 0.1.0
-- **Last Updated**: 2026-02-22
+- **Latest Version**: 1.0.0
+- **Last Updated**: 2026-02-23
 
 ### Getting Help
 
@@ -330,6 +333,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 ### Roadmap
 
 Future enhancements planned:
+
 - [ ] Support for additional frameworks (Xamarin, Ionic, Cordova standalone)
 - [ ] Build queue management for multiple concurrent builds
 - [ ] Webhook integration for automatic builds on push
@@ -339,10 +343,20 @@ Future enhancements planned:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for full details.
+
+```
+MIT License
+
+Copyright (c) 2026 Pangerkumzuk Longkumer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...
+```
 
 ---
 
-**Made with ❤️ by the Git-to-App Team**
+**Made with ❤️ by [@pangerlkr](https://github.com/pangerlkr) and [contributors](https://github.com/pangerlkr/Git-to-app/graphs/contributors)**
 
-⭐ Star this repo if you find it useful!
+> ⭐ **If Git-to-App saved you time, please [star this repo](https://github.com/pangerlkr/Git-to-app/stargazers)** — it really helps! 🚀
