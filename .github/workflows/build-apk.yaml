@@ -78,7 +78,11 @@ jobs:
 
           cd "$BUILD_DIR"
 
-          if [ ! -f "gradlew" ]; then gradle wrapper; fi
+          # Ensure Gradle Wrapper exists and is complete (gradlew + jar + properties)
+          if [ ! -f "./gradlew" ] || [ ! -f "./gradle/wrapper/gradle-wrapper.jar" ] || [ ! -f "./gradle/wrapper/gradle-wrapper.properties" ]; then
+            echo "Gradle wrapper incomplete/missing; regenerating wrapper..."
+            gradle wrapper
+          fi
           # Fix potential Windows-style CRLF line endings in gradlew
           if file gradlew | grep -q CRLF; then
             echo "Normalizing gradlew line endings (CRLF -> LF)..."
