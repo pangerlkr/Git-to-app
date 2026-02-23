@@ -10,6 +10,7 @@ Transform any GitHub repository into a production-ready Android and iOS mobile a
 - [Quick Start](#quick-start)
 - [Setup](#setup)
 - [Usage Examples](#usage-examples)
+- [Example Projects & Templates](#example-projects--templates)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Running Tests](#running-tests)
@@ -201,6 +202,21 @@ You can trigger external repository builds directly via GitHub Actions:
 # Enter repository URL and options
 # Download artifact when complete
 ```
+
+### Example Projects & Templates
+
+Git-to-App includes example projects demonstrating the expected build configurations:
+
+| Example | Description | Location |
+|---------|-------------|----------|
+| **Android Gradle** | Complete native Android project with Gradle 8.x build files | [`examples/android/`](examples/android/) |
+
+These examples serve as:
+- 📚 **Reference documentation** for required build configurations
+- 🧪 **Testing resources** for validating framework detection
+- 📝 **Templates** for creating compatible projects
+
+See the [examples directory](examples/) for complete documentation and usage instructions.
 
 ## Architecture
 
