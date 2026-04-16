@@ -41,7 +41,11 @@ jobs:
             git clone --recurse-submodules --depth=1 "${{ github.event.inputs.repository }}" workspace
           else
             git clone --recurse-submodules --depth=1 --branch "${{ github.event.inputs.branchName }}" "${{ github.event.inputs.repository }}" workspace
-          fi
+          fi || {
+            echo "::error::Failed to clone '${{ github.event.inputs.repository }}'."
+            echo "::error::If this is a private repository, set the GH_PAT repository secret to a personal access token with 'repo' scope and re-run the workflow."
+            exit 1
+          }
 
       - name: Determine React Native project directory
         working-directory: ./workspace
