@@ -74,6 +74,7 @@ jobs:
               return signature + ihdr + idat + iend
 
           density_sizes = {
+              'mipmap-ldpi':    36,
               'mipmap-mdpi':    48,
               'mipmap-hdpi':    72,
               'mipmap-xhdpi':   96,
@@ -84,7 +85,9 @@ jobs:
           PNG_MAGIC = b'\x89PNG'
           fixed = 0
           for root, dirs, files in os.walk('.'):
-              if 'mipmap' not in root:
+              # Only process directories whose name is a known mipmap density qualifier
+              dir_name = os.path.basename(root)
+              if not dir_name.startswith('mipmap-'):
                   continue
               for fname in files:
                   if not fname.lower().endswith('.png'):
@@ -98,11 +101,8 @@ jobs:
                   except Exception as e:
                       print(f"Warning: could not read {path}: {e}")
                       continue
-                  size = 48
-                  for density, s in density_sizes.items():
-                      if density in root:
-                          size = s
-                          break
+                  # Exact lookup by directory name; fall back to mdpi (48px)
+                  size = density_sizes.get(dir_name, 48)
                   print(f"Replacing invalid PNG: {path} ({size}x{size})")
                   with open(path, 'wb') as fh:
                       fh.write(make_png(size, size))
