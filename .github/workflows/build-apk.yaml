@@ -85,9 +85,9 @@ jobs:
           PNG_MAGIC = b'\x89PNG'
           fixed = 0
           for root, dirs, files in os.walk('.'):
-              # Only process directories whose name is a known mipmap density qualifier
+              # Only process directories that are known Android mipmap density qualifiers
               dir_name = os.path.basename(root)
-              if not dir_name.startswith('mipmap-'):
+              if dir_name not in density_sizes:
                   continue
               for fname in files:
                   if not fname.lower().endswith('.png'):
@@ -101,8 +101,7 @@ jobs:
                   except Exception as e:
                       print(f"Warning: could not read {path}: {e}")
                       continue
-                  # Exact lookup by directory name; fall back to mdpi (48px)
-                  size = density_sizes.get(dir_name, 48)
+                  size = density_sizes[dir_name]  # always present; outer check guarantees it
                   print(f"Replacing invalid PNG: {path} ({size}x{size})")
                   with open(path, 'wb') as fh:
                       fh.write(make_png(size, size))
