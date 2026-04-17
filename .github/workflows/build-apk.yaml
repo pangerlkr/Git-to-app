@@ -55,6 +55,61 @@ jobs:
             exit 1
           }
 
+      - name: Fix invalid launcher PNG icons
+        working-directory: ./workspace
+        run: |
+          python3 - <<'PYEOF'
+          import os, struct, zlib
+
+          def make_png(width, height):
+              """Generate a minimal valid RGB PNG (white, no alpha)."""
+              def chunk(ctype, data):
+                  c = ctype + data
+                  return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
+              signature = b'\x89PNG\r\n\x1a\n'
+              ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
+              raw = b''.join(b'\x00' + b'\xff\xff\xff' * width for _ in range(height))
+              idat = chunk(b'IDAT', zlib.compress(raw))
+              iend = chunk(b'IEND', b'')
+              return signature + ihdr + idat + iend
+
+          density_sizes = {
+              'mipmap-ldpi':    36,
+              'mipmap-mdpi':    48,
+              'mipmap-hdpi':    72,
+              'mipmap-xhdpi':   96,
+              'mipmap-xxhdpi':  144,
+              'mipmap-xxxhdpi': 192,
+          }
+
+          PNG_MAGIC = b'\x89PNG'
+          fixed = 0
+          for root, dirs, files in os.walk('.'):
+              # Only process directories that are known Android mipmap density qualifiers
+              dir_name = os.path.basename(root)
+              if dir_name not in density_sizes:
+                  continue
+              for fname in files:
+                  if not fname.lower().endswith('.png'):
+                      continue
+                  path = os.path.join(root, fname)
+                  try:
+                      with open(path, 'rb') as fh:
+                          header = fh.read(4)
+                      if header == PNG_MAGIC:
+                          continue
+                  except Exception as e:
+                      print(f"Warning: could not read {path}: {e}")
+                      continue
+                  size = density_sizes[dir_name]  # always present; outer check guarantees it
+                  print(f"Replacing invalid PNG: {path} ({size}x{size})")
+                  with open(path, 'wb') as fh:
+                      fh.write(make_png(size, size))
+                  fixed += 1
+
+          print(f"Fixed {fixed} invalid PNG file(s).")
+          PYEOF
+
       - name: Build APK
         working-directory: ./workspace
         run: |
