@@ -76,7 +76,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ github.event.inputs.flutterVersion }}
-          channel: ${{ github.event.inputs.flutterVersion == 'stable' || github.event.inputs.flutterVersion == 'beta' && github.event.inputs.flutterVersion || 'stable' }}
+          channel: ${{ (github.event.inputs.flutterVersion == 'stable' || github.event.inputs.flutterVersion == 'beta') && github.event.inputs.flutterVersion || 'stable' }}
           cache: true
 
       - name: Get Flutter dependencies

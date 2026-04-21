@@ -74,20 +74,32 @@ jobs:
               return signature + ihdr + idat + iend
 
           density_sizes = {
-              'mipmap-ldpi':    36,
-              'mipmap-mdpi':    48,
-              'mipmap-hdpi':    72,
-              'mipmap-xhdpi':   96,
-              'mipmap-xxhdpi':  144,
-              'mipmap-xxxhdpi': 192,
+              'ldpi':    36,
+              'mdpi':    48,
+              'hdpi':    72,
+              'xhdpi':   96,
+              'xxhdpi':  144,
+              'xxxhdpi': 192,
           }
+          DEFAULT_SIZE = 48
+
+          def get_size_for_dir(dir_name):
+              """Return PNG dimension for an Android resource directory."""
+              # Split on '-' and check each part for a density token; the last
+              # matching token wins (e.g. 'drawable-land-xhdpi' → 'xhdpi').
+              parts = dir_name.split('-')
+              result = DEFAULT_SIZE
+              for part in parts:
+                  if part in density_sizes:
+                      result = density_sizes[part]
+              return result
 
           PNG_MAGIC = b'\x89PNG'
           fixed = 0
           for root, dirs, files in os.walk('.'):
-              # Only process directories that are known Android mipmap density qualifiers
+              # Process mipmap-*, drawable-*, and plain drawable directories
               dir_name = os.path.basename(root)
-              if dir_name not in density_sizes:
+              if not (dir_name.startswith('mipmap-') or dir_name.startswith('drawable-') or dir_name == 'drawable'):
                   continue
               for fname in files:
                   if not fname.lower().endswith('.png'):
@@ -101,7 +113,7 @@ jobs:
                   except Exception as e:
                       print(f"Warning: could not read {path}: {e}")
                       continue
-                  size = density_sizes[dir_name]  # always present; outer check guarantees it
+                  size = get_size_for_dir(dir_name)
                   print(f"Replacing invalid PNG: {path} ({size}x{size})")
                   with open(path, 'wb') as fh:
                       fh.write(make_png(size, size))
