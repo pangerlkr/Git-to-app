@@ -85,12 +85,14 @@ jobs:
 
           def get_size_for_dir(dir_name):
               """Return PNG dimension for an Android resource directory."""
-              # Strip mipmap-/drawable- prefix and split on '-' to find the density token
+              # Split on '-' and check each part for a density token; the last
+              # matching token wins (e.g. 'drawable-land-xhdpi' → 'xhdpi').
               parts = dir_name.split('-')
-              for part in reversed(parts):
+              result = DEFAULT_SIZE
+              for part in parts:
                   if part in density_sizes:
-                      return density_sizes[part]
-              return DEFAULT_SIZE
+                      result = density_sizes[part]
+              return result
 
           PNG_MAGIC = b'\x89PNG'
           fixed = 0
